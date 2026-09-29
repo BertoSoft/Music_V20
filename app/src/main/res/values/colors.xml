@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Fondo e Interfaz General -->
-    <color name="backcolor_app">#0F1115</color>       <!-- Negro profundo azulado -->
-    <color name="back_color_item">#181A20</color>     <!-- Gris oscuro para tarjetas (da profundidad) -->
+    <color name="backcolor_app">#0F1115</color>             <!-- Negro profundo azulado -->
+    <color name="back_color_item">#181A20</color>           <!-- Gris oscuro para tarjetas (da profundidad) -->
+    <color name="back_color_item_click">#E91E63</color>     <!-- Gris oscuro para tarjetas (da profundidad) -->
+
 
     <!-- Colores de Acento (Controles y Progreso) -->
     <color name="primario">#6C5CE7</color>            <!-- Morado Neón moderno y elegante -->

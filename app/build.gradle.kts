@@ -55,4 +55,6 @@ dependencies {
     // Inyección de dependencias con Hilt usando KSP
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    // Librería oficial de ExoPlayer para Media3
+    implementation("androidx.media3:media3-exoplayer:1.1.1") // O la versión estable más reciente
 }

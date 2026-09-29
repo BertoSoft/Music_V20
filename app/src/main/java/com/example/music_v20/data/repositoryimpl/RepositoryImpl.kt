@@ -2,6 +2,8 @@ package com.example.music_v20.data.repositoryimpl
 
 import com.example.music_v20.core.di.IoDispatcher
 import com.example.music_v20.data.datasource.PlayerDataSource
+import com.example.music_v20.data.mappers.toDomain
+import com.example.music_v20.data.model.CancionDto
 import com.example.music_v20.modulos.home.domain.model.Cancion
 import com.example.music_v20.modulos.home.domain.repository.PlayerRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,7 +16,9 @@ class RepositoryImpl @Inject constructor(
 ): PlayerRepository {
     override suspend fun getListaCanciones(): List<Cancion> {
         return withContext(coroutine){
-            dataSource.getAllCanciones()
+            val listaDto = dataSource.getAllCanciones()
+            val listaDomain = listaDto.map { it.toDomain() }
+            return@withContext listaDomain
         }
     }
 }

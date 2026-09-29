@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Estado cuando la canción está seleccionada/marcada -->
+    <item android:state_selected="true">
+        <!-- Color primario con 10% de opacidad (Efecto translúcido moderno) -->
+        <color android:color="@color/back_color_item_click" />
+    </item>
+
+    <!-- Estado por defecto cuando la canción NO está seleccionada -->
+    <item>
+        <!-- Tu color base actual -->
+        <color android:color="@color/back_color_item" />
+    </item>
+</selector>

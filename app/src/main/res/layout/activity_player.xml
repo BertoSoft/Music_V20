@@ -11,7 +11,7 @@
 
     <!-- 1. BLOQUE SUPERIOR: Analizador con sutil transparencia moderna -->
     <com.example.music_v20.modulos.home.ui.Equalizador
-        android:id="@+id/spectrumVisualizer"
+        android:id="@+id/visualizadorEQ"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="#0AFFFFFF"
@@ -25,7 +25,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Título de la Canción Actual"
+        android:text="Lista de canciones vacía ..."
         android:textAlignment="center"
         android:textSize="20sp"
         android:textColor="@color/texto_principal"
@@ -34,7 +34,7 @@
         android:ellipsize="end"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/spectrumVisualizer" />
+        app:layout_constraintTop_toBottomOf="@id/visualizadorEQ" />
 
     <!-- 2. BLOQUE CENTRAL: Contenedor de lista integrado al fondo -->
     <androidx.cardview.widget.CardView
