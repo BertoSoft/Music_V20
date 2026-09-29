@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android= "http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backcolor_app"
+    android:padding="16dp"
+    tools:context=".modulos.home.ui.PlayerActivity">
+
+    <!-- 1. BLOQUE SUPERIOR: Analizador con sutil transparencia moderna -->
+    <com.example.music_v20.modulos.home.ui.Equalizador
+        android:id="@+id/spectrumVisualizer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#0AFFFFFF"
+        app:layout_constraintHeight_percent="0.4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/txtCancion"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Título de la Canción Actual"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:textColor="@color/texto_principal"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spectrumVisualizer" />
+
+    <!-- 2. BLOQUE CENTRAL: Contenedor de lista integrado al fondo -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardContenedorLista"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="24dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@color/backcolor_app"
+        app:layout_constraintBottom_toTopOf="@id/seekBarraProgreso"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txtCancion">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvCanciones"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="4dp"
+            android:clipToPadding="false"
+            tools:listitem="@layout/item_player" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- 3. BLOQUE INFERIOR: Barra de tiempo y controles -->
+    <SeekBar
+        android:id="@+id/seekBarraProgreso"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:progressTint="@color/primario"
+        android:thumbTint="@color/primario"
+        android:progressBackgroundTint="#26FFFFFF"
+        app:layout_constraintBottom_toTopOf="@id/btnPlay"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/txtProgreso"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00"
+        android:textSize="12sp"
+        android:textColor="@color/texto_secundario"
+        app:layout_constraintStart_toStartOf="@id/seekBarraProgreso"
+        app:layout_constraintTop_toBottomOf="@id/seekBarraProgreso" />
+
+    <TextView
+        android:id="@+id/txtDuracion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="03:45"
+        android:textSize="12sp"
+        android:textColor="@color/texto_secundario"
+        app:layout_constraintEnd_toEndOf="@id/seekBarraProgreso"
+        app:layout_constraintTop_toBottomOf="@id/seekBarraProgreso" />
+
+    <!-- Botón de Atrás -->
+    <ImageButton
+        android:id="@+id/btnAtras"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Atrás"
+        android:scaleType="fitCenter"
+        android:src="@android:drawable/ic_media_previous"
+        app:tint="@color/texto_principal"
+        app:layout_constraintBottom_toBottomOf="@id/btnPlay"
+        app:layout_constraintEnd_toStartOf="@id/btnPlay"
+        app:layout_constraintTop_toTopOf="@id/btnPlay" />
+
+    <!-- Botón de Play Central Destacado -->
+    <ImageButton
+        android:id="@+id/btnPlay"
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        android:layout_marginBottom="16dp"
+        android:background="@android:color/transparent"
+        android:backgroundTint="@color/primario"
+        android:elevation="6dp"
+        android:contentDescription="Play o Pause"
+        android:scaleType="centerInside"
+        android:src="@android:drawable/ic_media_play"
+        app:tint="@color/texto_principal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Botón de Adelante -->
+    <ImageButton
+        android:id="@+id/btnAdelante"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Adelante"
+        android:scaleType="fitCenter"
+        android:src="@android:drawable/ic_media_next"
+        app:tint="@color/texto_principal"
+        app:layout_constraintBottom_toBottomOf="@id/btnPlay"
+        app:layout_constraintStart_toEndOf="@id/btnPlay"
+        app:layout_constraintTop_toTopOf="@id/btnPlay" />
+
+
+    <!-- ProgressBar de carga flotante -->
+    <ProgressBar
+        android:id="@+id/pbCargando"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:visibility="gone"
+        android:elevation="8dp"
+        style="?android:attr/progressBarStyle"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

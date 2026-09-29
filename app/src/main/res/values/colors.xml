@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo e Interfaz General -->
+    <color name="backcolor_app">#0F1115</color>       <!-- Negro profundo azulado -->
+    <color name="back_color_item">#181A20</color>     <!-- Gris oscuro para tarjetas (da profundidad) -->
+
+    <!-- Colores de Acento (Controles y Progreso) -->
+    <color name="primario">#6C5CE7</color>            <!-- Morado Neón moderno y elegante -->
+    <color name="secundario">#A29BFE</color>          <!-- Morado claro para textos secundarios -->
+
+    <!-- Textos Básicos -->
+    <color name="texto_principal">#FFFFFF</color>     <!-- Blanco puro para títulos -->
+    <color name="texto_secundario">#7E8494</color>    <!-- Gris mutado para duraciones y progreso -->
+</resources>
