@@ -13,5 +13,12 @@ class Equalizador @JvmOverloads constructor(
     miAtributo,
     miDefEstiloAtributo){
 
+    fun actualizarBarras(datos: FloatArray){
+
+        // En teroria aqui llegan 126 datos de amplitudes por frecuencias
+        if(datos == null) return
+
+    }
+
 
 }

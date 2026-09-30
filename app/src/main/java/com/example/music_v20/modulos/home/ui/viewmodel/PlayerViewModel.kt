@@ -156,4 +156,12 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    fun cancionEnd(estaUsuarioMoviendoBarra: Boolean){
+        if(estaUsuarioMoviendoBarra){
+            return
+        }
+        else{
+            adelanteClick()
+        }
+    }
 }

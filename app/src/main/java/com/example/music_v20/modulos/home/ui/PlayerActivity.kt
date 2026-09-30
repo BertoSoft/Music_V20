@@ -2,20 +2,22 @@ package com.example.music_v20.modulos.home.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.net.Uri
+import android.media.audiofx.Visualizer
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.music_v20.databinding.ActivityPlayerBinding
 import com.example.music_v20.modulos.home.domain.extensions.toMinSeg
@@ -30,14 +32,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
+@UnstableApi
 @AndroidEntryPoint
 class PlayerActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityPlayerBinding
     private val viewModel: PlayerViewModel by viewModels()
-    private  val miAdaptador: PlayerAdapter by lazy { PlayerAdapter() }
+    private val miAdaptador: PlayerAdapter by lazy { PlayerAdapter() }
     private var exoPlayer: ExoPlayer? = null
+    private var visualizadorAudio: android.media.audiofx.Visualizer? = null
     private var trabajoProgreso: Job? = null
+    private var estaUsuarioMoviendoBarra = false
 
     // 1. Un ÚNICO lanzador simplificado para todos los permisos
     private val lanzadorPermisos = registerForActivityResult(
@@ -72,11 +77,51 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun initExoPlayer() {
-        exoPlayer = ExoPlayer.Builder(this).build()
+        exoPlayer = ExoPlayer.Builder(this).build().apply {
+            // Listener para detectar el fin de la cancion
+            addListener(object : androidx.media3.common.Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    super.onPlaybackStateChanged(playbackState)
+                    if (playbackState == androidx.media3.common.Player.STATE_ENDED) {
+                        viewModel.cancionEnd(estaUsuarioMoviendoBarra)
+                    }
+                }
+            })
+        }
+    }
+
+    private fun initVisualizador(idAudioSesion: Int) {
+        try {
+            visualizadorAudio = android.media.audiofx.Visualizer(idAudioSesion).apply {
+                // Fijamos el tamaño directamente a 256 de forma segura
+                captureSize = 256
+
+                setDataCaptureListener(object :
+                    android.media.audiofx.Visualizer.OnDataCaptureListener {
+                    override fun onWaveFormDataCapture(
+                        p0: Visualizer?,
+                        p1: ByteArray?,
+                        p2: Int
+                    ) {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun onFftDataCapture(
+                        p0: Visualizer?,
+                        fft: ByteArray?,
+                        sampleRate: Int
+                    ) {
+                        if (fft != null) procesaDatosFFT(fft, sampleRate)
+                    }
+                }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun initRv() {
-        with(binding.rvCanciones){
+        with(binding.rvCanciones) {
             layoutManager = LinearLayoutManager(this@PlayerActivity)
             adapter = miAdaptador
             setHasFixedSize(true)
@@ -88,7 +133,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun initListeners() {
-        with(binding){
+        with(binding) {
             btnPlay.setOnClickListener {
                 viewModel.playClick()
             }
@@ -98,12 +143,43 @@ class PlayerActivity : AppCompatActivity() {
             btnAtras.setOnClickListener {
                 viewModel.atrasClick()
             }
+            seekBarraProgreso.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seelBarra: SeekBar?,
+                    posicion: Int,
+                    movidoPorUsuario: Boolean
+                ) {
+                    // Cambia el progreso
+                    txtProgreso.text = posicion.toLong().toMinSeg()
+                }
+
+                override fun onStartTrackingTouch(p0: SeekBar?) {
+                    //el usuario empezo a tocar la barra
+                    estaUsuarioMoviendoBarra = true
+                    if (exoPlayer?.isPlaying == true) {
+                        viewModel.playClick()
+                    }
+                }
+
+                override fun onStopTrackingTouch(p0: SeekBar?) {
+                    // Elusuario solto la barrra
+                    estaUsuarioMoviendoBarra = false
+                    val newPos = p0?.progress?.toLong()
+
+                    if (newPos != null) {
+                        exoPlayer?.seekTo(newPos)
+                        if (exoPlayer?.isPlaying == false) {
+                            viewModel.playClick()
+                        }
+                    }
+                }
+            })
         }
     }
 
     private fun initObservers() {
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED){
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.estado.collect { estadoUi ->
                     dibujaUi(estadoUi)
                 }
@@ -111,7 +187,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED){
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.player.collect { estadoPlayer ->
                     gestionaPlayer(estadoPlayer)
                 }
@@ -120,25 +196,24 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     fun dibujaUi(estado: PlayerUiEstado) {
-        with(binding){
+        with(binding) {
 
             // 0.- Barra de Progreso, se activa cuando isCargando es cierto
-            if(estado.isCargando){
+            if (estado.isCargando) {
                 pbCargando.visibility = View.VISIBLE
                 rvCanciones.alpha = 0.5F
-            }
-            else{
+            } else {
                 pbCargando.visibility = View.GONE
                 rvCanciones.alpha = 1.0F
             }
 
             // 1.- RecyclerView entra cuando la lista del adaptador != estado.lista
-            if(miAdaptador.currentList != estado.listaCanciones){
+            if (miAdaptador.currentList != estado.listaCanciones) {
                 miAdaptador.submitList(estado.listaCanciones)
             }
 
             // 2.- Cancion Actual y duracion, cuando existe cancionActual y titulo != txtCancion.text
-            if(estado.cancionActual != null && estado.cancionActual.titulo != txtCancion.text){
+            if (estado.cancionActual != null && estado.cancionActual.titulo != txtCancion.text) {
                 txtCancion.text = estado.cancionActual.titulo
                 txtCancion.tag = txtCancion.id
                 txtDuracion.text = estado.cancionActual.duracion.toMinSeg()
@@ -149,7 +224,7 @@ class PlayerActivity : AppCompatActivity() {
             }
 
             // 5.- Mensajes de error
-            if(estado.msgError != null){
+            if (estado.msgError != null) {
                 Toast.makeText(
                     this@PlayerActivity,
                     estado.msgError,
@@ -160,9 +235,9 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     fun gestionaPlayer(estado: ExoPlayerUiEstado) {
-        if(estado.cancionActual == null) return
+        if (estado.cancionActual == null) return
 
-        when(estado.estadoPlayer){
+        when (estado.estadoPlayer) {
 
             //exoPlayer()
             ExoPlayerEstado.Play -> {
@@ -171,8 +246,9 @@ class PlayerActivity : AppCompatActivity() {
                 binding.btnPlay.setImageResource(android.R.drawable.ic_media_pause)
                 binding.visualizadorEQ.visibility = View.VISIBLE
 
-                if(exoPlayer?.currentMediaItem == null ||
-                    exoPlayer?.currentMediaItem?.mediaId != estado.cancionActual.id_android.toString()){
+                if (exoPlayer?.currentMediaItem == null ||
+                    exoPlayer?.currentMediaItem?.mediaId != estado.cancionActual.id_android.toString()
+                ) {
 
                     val mediaItem = MediaItem.Builder()
                         .setUri(rutaNueva)
@@ -184,7 +260,15 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 exoPlayer?.play()
                 iniciarBucleProgreso();
+
+                // Vinculamos el visulizadoral Id de sesion de AudioPlayer
+                val idAudioSesion = exoPlayer?.audioSessionId ?: 0
+                if (idAudioSesion != 0) {
+                    initVisualizador(idAudioSesion)
+                }
+                visualizadorAudio?.enabled = true
             }
+
             ExoPlayerEstado.Pause -> {
                 // Sincronización de UI: Botón central cambia a PLAY y pausamos ecualizador
                 binding.btnPlay.setImageResource(android.R.drawable.ic_media_play)
@@ -193,6 +277,8 @@ class PlayerActivity : AppCompatActivity() {
                 // Lógica Física: Pausamos ExoPlayer y congelamos el hilo de la barra
                 exoPlayer?.pause()
                 detenerBucleProgreso()
+
+                visualizadorAudio?.enabled = false
             }
 
             ExoPlayerEstado.Stop -> {
@@ -205,15 +291,39 @@ class PlayerActivity : AppCompatActivity() {
                 // Reseteamos valores visuales a cero
                 binding.seekBarraProgreso.progress = 0
                 binding.txtProgreso.text = "00:00"
+
+                visualizadorAudio?.enabled = false
             }
         }
     }
 
-    private fun iniciarBucleProgreso(){
+    private fun procesaDatosFFT(fft: ByteArray, sampleRate: Int) {
+        val n = fft.size
+
+        // Creamos el array restando 1 posición, ya que vamos a ignorar los datos 0 y 1
+        val datos = FloatArray((n / 2) - 1)
+
+        // Empezamos el bucle directamente en i = 1 (saltándonos los datos huérfanos del inicio)
+        for (i in 1 until n / 2) {
+            val r = fft[2 * i].toFloat()
+            val j = fft[2 * i + 1].toFloat()
+
+            // Guardamos el resultado en i - 1 para rellenar nuestro array desde la posición 0
+            datos[i - 1] = kotlin.math.hypot(r, j)
+        }
+
+        // Enviamos solo las frecuencias musicales puras a tu vista
+        runOnUiThread {
+            binding.visualizadorEQ.actualizarBarras(datos)
+        }
+    }
+
+
+    private fun iniciarBucleProgreso() {
         detenerBucleProgreso()
 
         trabajoProgreso = lifecycleScope.launch {
-            while (true){
+            while (true) {
                 val posActual = exoPlayer?.currentPosition ?: 0
 
                 // Actualizamos la vbarra de rpogreso y el texto
@@ -225,7 +335,7 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun detenerBucleProgreso(){
+    private fun detenerBucleProgreso() {
         trabajoProgreso?.cancel()
         trabajoProgreso = null
     }
