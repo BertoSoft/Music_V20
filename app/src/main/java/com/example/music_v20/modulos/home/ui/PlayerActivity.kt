@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -77,8 +78,16 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun initExoPlayer() {
+        // 1. Definimos los atributos de audio especificando que es CONTENIDO MUSICAL
+        val atributosAudio = androidx.media3.common.AudioAttributes.Builder()
+            .setUsage(androidx.media3.common.C.USAGE_MEDIA) // Indica que es multimedia/música
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC) // Contenido musical
+            .build()
+
+        // 2. Construimos el ExoPlayer aplicando los atributos y el control del sistema
         exoPlayer = ExoPlayer.Builder(this).build().apply {
-            // Listener para detectar el fin de la cancion
+            // Asignamos los atributos para que Android sepa que debe redirigir el audio a los auriculares
+            setAudioAttributes(atributosAudio, true)
             addListener(object : androidx.media3.common.Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     super.onPlaybackStateChanged(playbackState)
@@ -94,7 +103,7 @@ class PlayerActivity : AppCompatActivity() {
         try {
             visualizadorAudio = android.media.audiofx.Visualizer(idAudioSesion).apply {
                 // Fijamos el tamaño directamente a 256 de forma segura
-                captureSize = 256
+                captureSize = 128
 
                 setDataCaptureListener(object :
                     android.media.audiofx.Visualizer.OnDataCaptureListener {
@@ -172,6 +181,23 @@ class PlayerActivity : AppCompatActivity() {
                             viewModel.playClick()
                         }
                     }
+                }
+            })
+            // --- CAPTURAR BOTÓN ATRÁS DEL TELÉFONO ---
+            onBackPressedDispatcher.addCallback(this@PlayerActivity, object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    // 1. Apagamos el reproductor físicamente y limpiamos hilos
+                    detenerBucleProgreso()
+                    exoPlayer?.stop()
+                    exoPlayer?.release()
+                    exoPlayer = null
+
+                    visualizadorAudio?.enabled = false
+                    visualizadorAudio?.release()
+                    visualizadorAudio = null
+
+                    // 2. Cerramos la actividad de forma correcta
+                    finish()
                 }
             })
         }
@@ -263,7 +289,13 @@ class PlayerActivity : AppCompatActivity() {
 
                 // Vinculamos el visulizadoral Id de sesion de AudioPlayer
                 val idAudioSesion = exoPlayer?.audioSessionId ?: 0
+
                 if (idAudioSesion != 0) {
+                    // Antes de inicializar el nuevo, libera el anterior de forma segura
+                    visualizadorAudio?.enabled = false
+                    visualizadorAudio?.release()
+                    visualizadorAudio = null
+
                     initVisualizador(idAudioSesion)
                 }
                 visualizadorAudio?.enabled = true
